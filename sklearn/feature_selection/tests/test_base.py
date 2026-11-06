@@ -114,6 +114,36 @@ def test_inverse_transform_sparse(csc_container):
         sel.inverse_transform(np.array([[1], [2]]))
 
 
+def test_inverse_transform_no_features_selected():
+    """Check that `inverse_transform` works when no features are selected.
+
+    In that case `transform` returns an array with no columns, and
+    `inverse_transform` should map it back to zeros with the original number
+    of features instead of raising an error.
+    """
+    sel = StepSelector(step=0).fit(X)
+
+    with pytest.warns(UserWarning, match="No features were selected"):
+        Xt_empty = sel.transform(X)
+    assert Xt_empty.shape == (X.shape[0], 0)
+
+    Xinv_empty = sel.inverse_transform(Xt_empty)
+    assert_array_equal(Xinv_empty, np.zeros_like(X))
+    assert Xinv_empty.dtype == Xt_empty.dtype
+
+
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_inverse_transform_sparse_no_features_selected(csc_container):
+    """Sparse counterpart of `test_inverse_transform_no_features_selected`."""
+    sel = StepSelector(step=0).fit(csc_container(X))
+
+    Xt_empty = csc_container((X.shape[0], 0), dtype=X.dtype)
+    Xinv_empty = sel.inverse_transform(Xt_empty)
+    assert Xinv_empty.shape == X.shape
+    assert Xinv_empty.nnz == 0
+    assert Xinv_empty.dtype == X.dtype
+
+
 def test_get_support():
     sel = StepSelector()
     sel.fit(X, y)

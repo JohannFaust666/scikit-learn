@@ -169,7 +169,9 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             return _align_api_if_sparse(Xt)
 
         support = self.get_support()
-        X = check_array(X, dtype=None)
+        # `transform` returns an array with no columns when no features are
+        # selected, so `inverse_transform` must accept it as well.
+        X = check_array(X, dtype=None, ensure_min_features=0)
         if support.sum() != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
 
